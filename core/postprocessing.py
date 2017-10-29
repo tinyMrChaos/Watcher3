@@ -13,7 +13,6 @@ logging = logging.getLogger(__name__)
 
 
 class Postprocessing(object):
-    exposed = True
 
     def __init__(self):
         self.snatcher = snatcher.Snatcher()
@@ -25,7 +24,7 @@ class Postprocessing(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def POST(self, **data):
+    def default(self, **data):
         ''' Handles post-processing requests.
         **data: keyword params send through POST request payload
 
@@ -535,7 +534,7 @@ class Postprocessing(object):
         '''
         new_string = string
         for k, v in data.items():
-            k = "{" + k + "}"
+            k = '{' + k + '}'
             if k in new_string:
                 new_string = new_string.replace(k, (v or ''))
 

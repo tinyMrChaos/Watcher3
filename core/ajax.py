@@ -6,7 +6,7 @@ import time
 import cherrypy
 import datetime
 import core
-from core import config, library, searchresults, searcher, snatcher, version, movieinfo, notification, plugins
+from core import config, library, searchresults, searcher, snatcher, movieinfo, notification, plugins
 from core.providers import torrent, newznab
 from core.downloaders import nzbget, sabnzbd, transmission, qbittorrent, deluge, rtorrent, blackhole
 from core.helpers import Conversions
@@ -95,7 +95,9 @@ class Ajax(object):
             results = [res for res in results if res.get('type') != 'torrent']
 
         if not results:
-            return {'response': False, 'next': Conversions.human_datetime(core.NEXT_SEARCH)}
+            ne = core.scheduler_plugin.task_list['Movie Search'].next_execution
+            ne = Conversions.human_datetime(ne) if ne else '[Disabled]'
+            return {'response': False, 'next': ne}
         else:
             for i in results:
                 i['size'] = Conversions.human_file_size(i['size'])
@@ -204,19 +206,27 @@ class Ajax(object):
         Returns dict ajax-style response
         '''
 
-        movie = core.sql.get_movie_details("imdbid", imdbid)
+        movie = core.sql.get_movie_details('imdbid', imdbid)
 
         if not movie:
             return {'response': False, 'error': Errors.database_read.format(imdbid)}
         else:
             success = self.searcher.search(imdbid, movie['title'], movie['year'], movie['quality'])
-            status = core.sql.get_movie_details("imdbid", imdbid)['status']
+            status = core.sql.get_movie_details('imdbid', imdbid)['status']
 
             if success:
                 results = core.sql.get_search_results(imdbid, movie['quality'])
+
                 for i in results:
                     i['size'] = Conversions.human_file_size(i['size'])
-                return {'response': True, 'results': results, 'movie_status': status, 'next': Conversions.human_datetime(core.NEXT_SEARCH)}
+
+                r = {'response': True, 'results': results, 'movie_status': status}
+
+                if len(results) == 0:
+                    ne = core.scheduler_plugin.task_list['Movie Search'].next_execution
+                    r['next'] = Conversions.human_datetime(ne) if ne else '[Disabled]'
+
+                return r
             else:
                 return {'response': False, 'error': Errors.database_read.format(imdbid), 'movie_status': status}
 
@@ -558,7 +568,7 @@ class Ajax(object):
             with open(c) as f:
                 config = json.load(f)
         except Exception as e:
-            logging.error("Unable to read config file.", exc_info=True)
+            logging.error('Unable to read config file.', exc_info=True)
             return ''
 
         return plugins.render_config(config)
@@ -1123,12 +1133,12 @@ class Ajax(object):
             year = movie['year']
             quality = movie['quality']
 
-            logging.info("Performing backlog search for {} {}.".format(title, year))
+            logging.info('Performing backlog search for {} {}.'.format(title, year))
 
             if not self.searcher.search(imdbid, title, year, quality):
-                response = {'response': False, 'error': Errors.database_write, 'imdbid': imdbid, "index": i + 1}
+                response = {'response': False, 'error': Errors.database_write, 'imdbid': imdbid, 'index': i + 1}
             else:
-                response = {'response': True, "index": i + 1}
+                response = {'response': True, 'index': i + 1}
 
             yield json.dumps(response)
 
@@ -1150,9 +1160,9 @@ class Ajax(object):
             r = self.metadata.update(movie.get('imdbid'), movie.get('tmdbid'))
 
             if r['response'] is False:
-                response = {'response': False, 'error': r['error'], 'imdbid': movie['imdbid'], "index": i + 1}
+                response = {'response': False, 'error': r['error'], 'imdbid': movie['imdbid'], 'index': i + 1}
             else:
-                response = {'response': True, "index": i + 1}
+                response = {'response': True, 'index': i + 1}
 
             yield json.dumps(response)
 
@@ -1173,9 +1183,9 @@ class Ajax(object):
 
         for i, movie in enumerate(movies):
             if not core.sql.update('MOVIES', 'quality', quality, 'imdbid', movie['imdbid']):
-                response = {'response': False, 'error': Errors.database_write, 'imdbid': movie['imdbid'], "index": i + 1}
+                response = {'response': False, 'error': Errors.database_write, 'imdbid': movie['imdbid'], 'index': i + 1}
             else:
-                response = {'response': True, "index": i + 1}
+                response = {'response': True, 'index': i + 1}
 
             yield json.dumps(response)
 
@@ -1201,7 +1211,7 @@ class Ajax(object):
             logging.debug('Resetting {}'.format(movie['imdbid']))
             imdbid = movie['imdbid']
             if not core.sql.purge_search_results(imdbid):
-                yield json.dumps({'response': False, 'error': _('Unable to purge search results.'), 'imdbid': imdbid, "index": i + 1})
+                yield json.dumps({'response': False, 'error': _('Unable to purge search results.'), 'imdbid': imdbid, 'index': i + 1})
                 continue
 
             db_reset = {'quality': 'Default',
@@ -1215,10 +1225,10 @@ class Ajax(object):
                         }
 
             if not core.sql.update_multiple_values('MOVIES', db_reset, imdbid=imdbid):
-                yield json.dumps({'response': False, 'error': Errors.database_write, 'imdbid': imdbid, "index": i + 1})
+                yield json.dumps({'response': False, 'error': Errors.database_write, 'imdbid': imdbid, 'index': i + 1})
                 continue
 
-            yield json.dumps({'response': True, "index": i + 1})
+            yield json.dumps({'response': True, 'index': i + 1})
 
     manager_reset_movies._cp_config = {'response.stream': True, 'tools.gzip.on': False}
 
@@ -1238,9 +1248,9 @@ class Ajax(object):
             r = self.remove_movie(movie['imdbid'])
 
             if r['response'] is False:
-                response = {'response': False, 'error': r['error'], 'imdbid': movie['imdbid'], "index": i + 1}
+                response = {'response': False, 'error': r['error'], 'imdbid': movie['imdbid'], 'index': i + 1}
             else:
-                response = {'response': True, "index": i + 1}
+                response = {'response': True, 'index': i + 1}
 
             yield(json.dumps(response))
 

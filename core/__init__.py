@@ -43,6 +43,7 @@ PLATFORM = None                             # Host OS ['windows', '*nix']
 SESSION_KEY = '_cp_username'                # Key to use when generating login session
 LANGUAGES = {}                              # Dict of language name: gettext object, ie {'es': <gettext_obj>}
 LANGUAGE = 'en'                             # Str first two letters of language code
+WS_CLIENTS = set()                          # Websocket client objects
 
 # Rate limiting
 TMDB_TOKENS = 35        # Int begin amount of tokens for TMDB rate limiting
@@ -72,7 +73,7 @@ def restart():
     cherrypy.engine.stop()
     python = sys.executable
     args = [SCRIPT_PATH] + sys.argv[1:]
-    p = "Server stopped -- respawning script as: \n {} {}".format(python, *args)
+    p = 'Server stopped -- respawning script as: \n {} {}'.format(python, *args)
     logging.info(p)
     print(p)
     os.execl(python, python, *args)

@@ -1,3 +1,5 @@
+socket = null;
+
 $(document).ready(function(){
     url_base = $("meta[name='url_base']").attr("content");
     show_notifs = JSON.parse($("meta[name='enable_notifs']").attr("content") || "true");
@@ -9,11 +11,16 @@ $(document).ready(function(){
         show_notifications(notifs);
     }
 
-    Socket = new WebSocket('ws://localhost:9090/ws');
-    Socket.onmessage = function(m){console.log('***', m)}
-    Socket.onopen = function(event, m){console.log('*', event)}
+    ws_connect('ws://localhost:9090/ws')
 });
 
+function ws_connect(url){
+    socket = new WebSocket(url);
+    socket.onmessage = function(m){console.log('***', m)}
+    socket.onclose = function(){
+        setTimeout(function(){ws_connect(url)}, 5000);
+    };
+}
 
 function show_notifications(notifs){
     /* Shows notifications in DOM

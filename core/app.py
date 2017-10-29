@@ -1,7 +1,8 @@
 import cherrypy
 import core
-from core import ajax, scheduler, plugins, localization
+from core import ajax, scheduler, plugins, localization, websocket, api
 from core.auth import AuthController
+from core.postprocessing import Postprocessing
 import os
 import json
 from mako.template import Template
@@ -9,23 +10,17 @@ from mako.template import Template
 import sys
 import time
 
-from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
-from ws4py.websocket import WebSocket
-from ws4py.messaging import TextMessage
-
-WebSocketPlugin(cherrypy.engine).subscribe()
-cherrypy.tools.websocket = WebSocketTool()
-
-
-SUBSCRIBERS = set()
+locale_dir = os.path.join(core.PROG_PATH, 'locale')
 
 
 class App(object):
 
-    auth = AuthController()
-
     @cherrypy.expose
     def __init__(self):
+        self.auth = AuthController()
+        self.postprocessing = Postprocessing()
+        self.api = api.API()
+
         if core.CONFIG['Server']['authrequired']:
             self._cp_config = {
                 'auth.require': []
@@ -104,10 +99,7 @@ class App(object):
 
     @cherrypy.expose
     def _test(self):
-        h = ''
-        active_tasks = [k for k, v in core.scheduler_plugin.task_list.items() if v.running]
-
-        return ', '.join(active_tasks)
+        return 'This is not the page you are looking for.'
 
     @cherrypy.expose
     def library(self, *path):
@@ -129,15 +121,15 @@ class App(object):
 
             if not subpage:
                 return App.import_template.render(**self.defaults())
-            elif subpage == "couchpotato":
+            elif subpage == 'couchpotato':
                 return App.couchpotato_template.render(sources=core.SOURCES, profiles=core.CONFIG['Quality']['Profiles'].keys(), **self.defaults())
-            elif subpage == "kodi":
+            elif subpage == 'kodi':
                 return App.kodi_template.render(sources=core.SOURCES, profiles=core.CONFIG['Quality']['Profiles'].keys(), **self.defaults())
-            elif subpage == "plex":
+            elif subpage == 'plex':
                 return App.plex_template.render(sources=core.SOURCES, profiles=core.CONFIG['Quality']['Profiles'].keys(), **self.defaults())
-            elif subpage == "directory":
+            elif subpage == 'directory':
                 try:
-                    start_dir = os.path.expanduser("~")
+                    start_dir = os.path.expanduser('~')
                     file_list = [i for i in os.listdir(start_dir) if os.path.isdir(os.path.join(start_dir, i)) and not i.startswith('.')]
                 except Exception as e:
                     start_dir = core.PROG_PATH
@@ -160,7 +152,7 @@ class App(object):
         page = path[0] if len(path) > 0 else 'server'
 
         if page == 'server':
-            themes = [i[:-4] for i in os.listdir('static/css/themes/') if i.endswith(".css") and os.path.isfile(os.path.join(core.PROG_PATH, 'static/css/themes', i))]
+            themes = [i[:-4] for i in os.listdir('static/css/themes/') if i.endswith('.css') and os.path.isfile(os.path.join(core.PROG_PATH, 'static/css/themes', i))]
             return App.server_template.render(config=core.CONFIG['Server'], themes=themes, version=core.CURRENT_HASH or '', languages=core.LANGUAGES.keys(), **self.defaults())
         elif page == 'search':
             return App.search_template.render(config=core.CONFIG['Search'], **self.defaults())
@@ -182,7 +174,7 @@ class App(object):
         elif page == 'download_log':
             if len(path) > 1:
                 l = os.path.join(os.path.abspath(core.LOG_DIR), path[1])
-                return cherrypy.lib.static.serve_file(l, "application/x-download", "attachment")
+                return cherrypy.lib.static.serve_file(l, 'application/x-download', 'attachment')
             else:
                 raise cherrypy.HTTPError(400)
         elif page == 'system':
@@ -191,7 +183,7 @@ class App(object):
                 tasks[name] = {'name': name,
                                'interval': obj.interval,
                                'last_execution': obj.last_execution,
-                               'enabled': obj.timer.is_alive()}
+                               'enabled': obj.timer.is_alive() if obj.timer else False}
 
             system = {'database': {'file': core.DB_FILE,
                                    'size': os.path.getsize(core.DB_FILE) / 1024
@@ -232,18 +224,3 @@ class App(object):
     def nav_bar(self, current=None):
         show_logout = True if cherrypy.session.get(core.SESSION_KEY) else False
         return App.navbar_template.render(url_base=core.URL_BASE, current=current, show_logout=show_logout)
-
-
-class ChatWebSocketHandler(WebSocket):
-
-    def __init__(self, *args, **kwargs):
-        WebSocket.__init__(self, *args, **kwargs)
-        SUBSCRIBERS.add(self)
-
-    @cherrypy.tools.json_in()
-    def received_message(self, msg):
-        self.send('THIS IS A RESPONSE')
-
-    def closed(self, code, reason="A client left the room without a proper explanation."):
-        SUBSCRIBERS.remove(self)
-        cherrypy.engine.publish('websocket-broadcast', TextMessage(reason))
