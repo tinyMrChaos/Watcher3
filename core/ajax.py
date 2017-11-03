@@ -62,6 +62,12 @@ class Ajax(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    def library_count(self):
+        c = core.sql.status_count(['Finished'])
+        return c
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
     def search_tmdb(self, search_term):
         ''' Search tmdb for movies
         search_term (str): title and year of movie (Movie Title 2016)
@@ -1332,3 +1338,6 @@ class Ajax(object):
             return {'response': True, 'message': _('Finished task {}.').format(name), 'last_execution': le, 'notifications': core.NOTIFICATIONS}
         except Exception as e:
             return {'response': False, 'error': str(e)}
+
+    def testmethod(self, name, nuts='balls'):
+        return '{}, {}'.format(name, nuts)

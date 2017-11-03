@@ -1,32 +1,41 @@
 import cherrypy
 import core
-from core import ajax, scheduler, plugins, localization, websocket, api
+from core import ajax, scheduler, plugins, localization, websockets, api
 from core.auth import AuthController
 from core.postprocessing import Postprocessing
 import os
 import json
 from mako.template import Template
+from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
+from ws4py.websocket import WebSocket
 
 import sys
 import time
 
 locale_dir = os.path.join(core.PROG_PATH, 'locale')
 
+WebSocketPlugin(cherrypy.engine).subscribe()
+cherrypy.tools.websocket = WebSocketTool()
+
+
+ajax = ajax.Ajax()
+ws = websockets.WS()
+
 
 class App(object):
 
     @cherrypy.expose
     def __init__(self):
-        self.auth = AuthController()
-        self.postprocessing = Postprocessing()
-        self.api = api.API()
-
         if core.CONFIG['Server']['authrequired']:
             self._cp_config = {
                 'auth.require': []
             }
 
-        self.ajax = ajax.Ajax()
+        self.auth = AuthController()
+        self.postprocessing = Postprocessing()
+        self.api = api.API()
+        self.ajax = ajax
+
         localization.get()
         localization.install()
 
@@ -63,7 +72,6 @@ class App(object):
         return defaults
 
     # All dispatching methods from here down
-
     status_template = Template(filename='templates/library/status.html', module_directory=core.MAKO_CACHE)
     manage_template = Template(filename='templates/library/manage.html', module_directory=core.MAKO_CACHE)
     import_template = Template(filename='templates/library/import.html', module_directory=core.MAKO_CACHE)
@@ -99,21 +107,13 @@ class App(object):
 
     @cherrypy.expose
     def _test(self):
-        return 'This is not the page you are looking for.'
+        return Template(filename='templates/index.html', module_directory=core.MAKO_CACHE).render()
 
     @cherrypy.expose
     def library(self, *path):
         page = path[0] if len(path) > 0 else 'status'
 
-        if page == 'status':
-            if core.CONFIG['Server']['hidefinished']:
-                movie_count = core.sql.get_library_count(hide_finished=True)
-                hidden_count = core.sql.get_library_count() - movie_count
-            else:
-                movie_count = core.sql.get_library_count()
-                hidden_count = 0
-            return App.status_template.render(profiles=core.CONFIG['Quality']['Profiles'].keys(), movie_count=movie_count, hidden_count=hidden_count, **self.defaults())
-        elif page == 'manage':
+        if page == 'manage':
             movies = core.sql.get_user_movies()
             return App.manage_template.render(movies=movies, profiles=core.CONFIG['Quality']['Profiles'].keys(), **self.defaults())
         elif page == 'import':
@@ -224,3 +224,20 @@ class App(object):
     def nav_bar(self, current=None):
         show_logout = True if cherrypy.session.get(core.SESSION_KEY) else False
         return App.navbar_template.render(url_base=core.URL_BASE, current=current, show_logout=show_logout)
+
+
+class WebSocketHandler(WebSocket):
+
+    def __init__(self, *args, **kwargs):
+        WebSocket.__init__(self, *args, **kwargs)
+        core.WS_CLIENTS.add(self)
+
+    def received_message(self, m):
+        msg = json.loads(m.data)
+
+        r = getattr(ws, msg['method'])(*msg['args'], **msg['kwargs'])
+        if r:
+            self.send(json.dumps(r))
+
+    def closed(self, code, reason="."):
+        core.WS_CLIENTS.remove(self)

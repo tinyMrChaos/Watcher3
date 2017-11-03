@@ -14,6 +14,14 @@ $(document).ready(function(){
     ws_connect('ws://localhost:9090/ws')
 });
 
+function ws_send(method, args, kwargs){
+    var p = {'method': method,
+             'args': args,
+             'kwargs': kwargs
+             }
+    socket.send(p)
+}
+
 function ws_connect(url){
     socket = new WebSocket(url);
     socket.onmessage = function(m){console.log('***', m)}

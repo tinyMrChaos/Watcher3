@@ -2,12 +2,6 @@ $(document).ready(function(){
     $checkboxes = $("ul#movie_list > li > .c_box");
     $movie_lis = $("ul#movie_list > li");
 
-    echo.init({offsetVertical: 100,
-               callback: function(element, op){
-                   $(element).css("opacity", 1)
-               }
-    });
-
     $checkboxes.click(function(){
         checkbox_switch(this)
     });
