@@ -1,55 +1,53 @@
 <template>
-<div id="status">
-    <div class="row at-row flex flex-around">
-        <at-button-group>
-            <at-button v-on:click="set_layout('posters')" :type="layout == 'posters' ? 'info' : 'default'">
-                <i class="mdi mdi-view-grid"></i>
-            </at-button>
-            <at-button v-on:click="set_layout('rows')" :type="layout == 'rows' ? 'info' : 'default'">
+<div id="status" class="is-component">
+    <el-row type="flex" justify="space-around">
+        <el-button-group>
+            <el-button icon="el-icon-menu" :type="layout == 'posters' ? 'primary' : null" v-on:click="set_layout('posters')">
+            </el-button>
+            <el-button type="primary" :type="layout == 'rows' ? 'primary' : null" v-on:click="set_layout('rows')">
                 <i class="mdi mdi-view-agenda"></i>
-            </at-button>
-            <at-button v-on:click="set_layout('mini')" :type="layout == 'mini' ? 'info' : 'default'">
-                <i class="icon icon-list"></i>
-            </at-button>
-        </at-button-group>
+            </el-button>
+            <el-button type="primary" :type="layout == 'table' ? 'primary' : null" v-on:click="set_layout('table')">
+                <i class="mdi mdi-view-list"></i>
+            </el-button>
+        </el-button-group>
         <div>
-            <at-select v-model="sort_key" v-on:on-change="set_sort_key" style="width:100px" size="large">
-                <at-option value="sort_title">Title</at-option>
-                <at-option value="year">Year</at-option>
-            </at-select>
-            <at-button v-on:click="toggle_sort_direction($event)">
-                <i v-bind:class="{'icon icon-arrow-up': sort_direction === 'asc',  'icon icon-arrow-down': sort_direction === 'desc'}"></i>
-            </at-button>
+            <el-select v-model="sort_key" v-on:change="set_sort_key">
+                <el-option value="sort_title">Title</el-option>
+                <el-option value="year">Year</el-option>
+            </el-select>
+            <el-button v-on:click="toggle_sort_direction($event)">
+                <i v-bind:class="'mdi ' + (sort_direction === 'asc' ?  'mdi-arrow-down': 'mdi-arrow-down')"></i>
+            </el-button>
         </div>
-    </div>
+    </el-row>
 
-    <div id="pager" class="flex flex-center">
-        <at-pagination :total="movies.length" page-size="50" v-on:page-change="set_page" show-quickjump></at-pagination>
-    </div>
+    <el-row type="flex" justify="center">
+        <el-pagination @current-change="set_page" :current-page="current_page" :page-size="50" :total="movies_len" layout="prev, pager, next, jumper"></el-pagination>
+    </el-row>
 
-    <div id="movies" :class="{'flex flex-around' : layout == 'posters'}">
-        <div class="movie" v-for="movie in display_movies" v-if="movie !== null" v-bind:key="movie.imdbid" @click="open_modal(movie)">
-            <div v-if="layout == 'posters'" class="card movie_card">
-                <img class='poster' v-lazy="'/posters/' + (movie.poster || 'missing_poster.jpg')">
+    <el-row id="movies" type="flex" justify="space-around">
+        <template v-for="movie in display_movies" v-if="movie !== null">
+            <div v-if="layout == 'posters'" class="card movie_card" v-bind:key="movie.imdbid">
+                <img class='poster' v-lazy="'/posters/' + (movie.poster || 'missing_poster.jpg')" @click="open_modal(movie)">
                 <div class="card_base">
                     <h4 class='title'>{{movie.title}}</h4>
                 </div>
                 <div :class="'status ' + movie.status">{{movie.status}}</div>
                 <span class="score" color="white" text-color="white"><i class="mdi mdi-star"></i>{{movie.score}}</span>
             </div>
-            <div v-if="layout == 'rows'" class="card movie_row">
+            <div v-if="layout == 'rows'" class="card movie_row" v-bind:key="movie.imdbid" @click="open_modal(movie)">
                 <img v-bind:src="'/posters/' + (movie.poster || 'missing_poster.jpg')"/>
             </div>
-        </div>
+        </template>
         <div v-if="layout == 'mini'">
             Doesnt exist yet but will be table
         </div>
-    </div>
+    </el-row>
 
-
-<at-modal id="movie_modal" v-model="movie_modal" v-on:on-cancel="close_modal()" v-on:on-close="close_modal()" :title="this.modal.title + ' (' + this.modal.year + ')'" styles='{height: 10%}' width='auto'>
-    <status-modal ref="status_modal" :movie="modal" :qualities="qualities"></status-modal>
-</at-modal>
+    <el-dialog ref="status_modal" id="movie_modal" :title="this.modal.title + ' (' + this.modal.year + ')'" :visible="modal_open" v-on:close="close_modal">
+        <status-modal :movie="modal" :qualities="qualities"></status-modal>
+    </el-dialog>
 
 </div>
 
@@ -70,7 +68,7 @@ module.exports = {
                 layout: layout,             // Layout style for movies (posters, rows, mini)
                 sort_key: _cookie.movie_sort_key || 'sort_title',   // How to sort movies (sort_title, year, status)
                 sort_direction: msd,        // Direction to sort movies (asc, desc)
-                movie_modal: false,         // Is movie modal open? Also triggers opening of modal.
+                modal_open: false,          // Is movie modal open? Also triggers opening of modal.
                 modal: {},                  // Movie to display in modal
                 movies_hidden: 0,           // # of movies hidden (Finished or Disabled) if user has hidefinished enabled
                 qualities: []
@@ -133,12 +131,12 @@ module.exports = {
             app.$refs.status_modal = this.$refs.status_modal;
             this.modal = movie;
             app.socket.send('search_results', [movie.imdbid], {'quality': movie.quality})
-            this.movie_modal = true;
-            // TODO: stop body from scrolling
+            this.modal_open = true;
         },
         close_modal: function(){
+            console.log('close_modal')
+            this.modal_open = false;
             app.$refs.status_modal = undefined;
-            // TODO: start body scrolling
         }
     },
     beforeMount: function(){
@@ -146,7 +144,7 @@ module.exports = {
         app.socket.send('movie_page', [this.sort_key, this.sort_direction], {'offset': 0})
     },
     mounted: function(){
-        app.socket.send('qualities');
+
     }
 }
 
@@ -154,18 +152,13 @@ module.exports = {
 
 
 <style type="text/css">
-img[lazy=loading]{
-    opacity: 0;
-}
-img[lazy=loaded] {
-    opacity: 1;
-}
-
 img.poster{
     display: inline-block;
 }
 h4{
-    text-align: center
+    text-align: center;
+    padding: 0;
+    margin: 0;
 }
 .active{
     color: red;
@@ -189,20 +182,20 @@ div#movies *{
     display: inline;
 }
 
-.movie .status.Waiting{
+.status.Waiting{
     background: gray;
 }
-.movie .status.Wanted{
+.status.Wanted{
     background: orange;
 }
-.movie .status.Found{
+.status.Found{
     background: yellow;
 }
-.movie .status.Snatched{
+.status.Snatched{
     background: green;
 }
 
-.movie .status.Finished{
+.status.Finished{
     background: blue;
 }
 
@@ -211,6 +204,7 @@ div#movies *{
     position: relative;
     border-radius: 4px;
     cursor: pointer;
+    font-size: .9em;
 }
 .movie_card img{
     height: 18em;
@@ -219,12 +213,14 @@ div#movies *{
 }
 .movie_card .status{
     height: 1.5em;
+    line-height: 1.5em;
     padding: 0 0.5em;
     display: inline-block;
     border-radius: 0 4px;
     position: absolute;
     bottom: 0;
     left: 0;
+    font-size: 0.9em;
 }
 
 .movie_card .title{
@@ -237,7 +233,8 @@ div#movies *{
     position: absolute;
     right: 0;
     bottom: 0;
-    margin-right: 0.5em;
+    margin: 0 0.5em 0.25em 0;
+    font-size: 0.9em;
 }
 
 .movie_row{

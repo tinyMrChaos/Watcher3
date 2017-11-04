@@ -1,40 +1,29 @@
 <template>
 <div id="navbar">
-    <at-menu mode="horizontal" v-on:on-select="page_change" :active-Name="current_page">
-        <!-- <img src='/static/images/logo.png' style="float:left"/> -->
-        <at-submenu>
-            <template slot="title">
-                Library
-            </template>
-            <at-menu-item name="1-1">
-                <i class="mdi mdi-movie"></i>
-                Movies
-            </at-menu-item>
-            <at-menu-item name="1-2">
-                <i class="icon icon-plus-square"></i>
-                Add
-            </at-menu-item>
-            <at-menu-item name="1-3">
-                <i class="icon icon-briefcase"></i>
-                Manage
-            </at-menu-item>
-        </at-submenu>
-        <at-submenu>
-            <template slot="title">
 
-                Settings
-            </template>
-            <at-menu-item name="2-2">
-                <i class="icon icon-server"></i>
-                Server
-            </at-menu-item>
-            <at-menu-item name="2-2">
-                <i class="icon icon-search"></i>
-                Search
-            </at-menu-item>
-            <at-menu-item name="2-3">Manage</at-menu-item>
-        </at-submenu>
-    </at-menu>
+<el-menu :default-active="current_page" mode="horizontal" @select="page_change">
+    <el-submenu index="1">
+        <template slot="title">Library</template>
+        <el-menu-item index="1-1">
+            <i class="mdi mdi-movie"></i>
+            Status
+        </el-menu-item>
+        <el-menu-item index="1-2">
+            <i class="mdi mdi-plus-box"></i>
+            Add
+        </el-menu-item>
+        <el-menu-item index="1-3">
+            <i class="mdi mdi-briefcase"></i>
+            Manage
+        </el-menu-item>
+    </el-submenu>
+    <el-submenu index="2">
+        <template slot="title">Settings</template>
+        <el-menu-item index="2-1">Server</el-menu-item>
+        <el-menu-item index="2-2">Search</el-menu-item>
+    </el-submenu>
+</el-menu>
+</div>
 </template>
 
 
@@ -70,7 +59,7 @@ div#navbar{
     margin: 0 auto;
 }
 
-#navbar i{
+div#navbar i{
     font-size: 1.25em;
 }
 

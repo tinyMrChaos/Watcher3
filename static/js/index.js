@@ -52,8 +52,8 @@ class socket {
     }
     sockopened(){
         if(this.warning_message){
-            this.close_warning();
-            app.$Message.success({message: 'Reconnected to server.', duration: 1500});
+            this.sock_closed_message.close();
+            app.$message({showClose: false, message: 'Reconnected to server.', type: 'success', duration: 1500});
         }
         for(var i=this.send_queue.length - 1; i >= 0; i--){
             this.send(JSON.stringify(this.send_queue[i]))
@@ -62,7 +62,7 @@ class socket {
     }
     sockclosed(){
         if(!this.warning_message){
-            this.close_warning = app.$Message.warning({message: 'Connection to server lost.', duration: 0});
+            this.sock_closed_message = app.$message({showClose: false, message: 'Connection to server lost.', type: 'warning', duration: 0});
             this.warning_message = true;
         }
     }
