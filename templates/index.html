@@ -39,6 +39,10 @@
                 vertical-align: middle;
             }
 
+            /* ElementUI overrides */
+            div.el-alert__content{
+                width: 100%;
+            }
             div.el-row.el-row--flex{
                 flex-wrap: wrap;
             }
@@ -49,6 +53,9 @@
             div.el-dialog__body{
                 padding: 10px 20px;
             }
+
+            /*                     */
+
             div.view{
                 padding-top: 4em;
             }
@@ -63,6 +70,30 @@
             }
             .card_base{
                 margin: 0 0.25em 0.25em 0.25em;
+            }
+            /* Status Colors */
+            .status.Waiting{
+                background: gray;
+            }
+            .status.Wanted{
+                background: orange;
+            }
+            .status.Found,
+            .status.Available{
+                background: yellow;
+            }
+            .status.Snatched{
+                background: green;
+            }
+
+            .status.Finished{
+                background: blue;
+            }
+            .right{
+                float: right;
+            }
+            .left{
+                float: left;
             }
         </style>
 

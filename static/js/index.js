@@ -35,19 +35,38 @@ class socket {
     }
     recv(msg){
         var m = JSON.parse(msg.data)
-        console.log(m)
         if(m.command == 'set'){
-            if(m.ref == null || m.ref == undefined){
-                for(var k in m.data){
-                    app[k] = m.data[k]
+            try {
+                var chain = m.ref.split('.');
+                var ref = app;
+                for(var i=0; i < chain.length; i++){
+                    if(chain[i]){
+                        ref = ref['$refs'][chain[i]]
+                    }
                 }
-            } else {
                 for(var k in m.data){
-                    app.$refs[m.ref][k] = m.data[k]
+                    ref[k] = m.data[k]
                 }
+            } catch (err) {
+                // console.log('Something Broke: ', err)
             }
         } else if (m.command == 'notify'){
-            app.$Notify(m.notification)
+            app.$notify(m.notification)
+        } else if (m.command == 'update_movie'){
+            try {
+                if(app.$refs.view.movies){
+                    for(var i=0; i < app.$refs.view.movies.length; i++){
+                        if(app.$refs.view.movies[i] && app.$refs.view.movies[i].imdbid == m.imdbid){
+                            for(var k in m.data){
+                                app.$refs.view.movies[i][k] = m.data[k]
+                            }
+                            break
+                        }
+                    }
+                }
+            } catch (err) {
+                //console.log('uhhhhhh', err)
+            }
         }
     }
     sockopened(){
@@ -65,9 +84,6 @@ class socket {
             this.sock_closed_message = app.$message({showClose: false, message: 'Connection to server lost.', type: 'warning', duration: 0});
             this.warning_message = true;
         }
-    }
-    notify(title, message, type, autoclose){
-        app.$Notify({})
     }
 }
 

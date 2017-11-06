@@ -824,19 +824,13 @@ class Manage(object):
 
         logging.info('Removing {} for library.'.format(imdbid))
 
-        m = core.sql.get_movie_details('imdbid', imdbid)
-
         removed = core.sql.remove_movie(imdbid)
 
-        if removed is True:
-            response = {'response': True, 'message': _('{} removed from library.').format(m.get('title'))}
+        if removed:
             threading.Thread(target=self.poster.remove_poster, args=(imdbid,)).start()
-        elif removed is False:
-            response = {'response': False, 'error': _('Unable to remove {}.').format(m.get('title'))}
-        elif removed is None:
-            response = {'response': False, 'error': _('{} does not exist in library.').format(imdbid)}
-
-        return response
+            return True
+        else:
+            return False
 
     def searchresults(self, guid, status, movie_info=None):
         ''' Marks searchresults status
@@ -929,12 +923,15 @@ class Manage(object):
                 logging.warning('Imdbid not supplied or found, unable to add entry to MARKEDRESULTS.')
                 return False
 
-    def movie_status(self, imdbid):
+    def movie_status(self, imdbid, reset_disabled=False):
         ''' Updates Movie status.
         imdbid (str): imdb identification number (tt123456)
+        reset_disabled (bool): if movie is disabled will stay disabled
 
         Updates Movie status based on search results.
         Always sets the status to the highest possible level.
+
+        Set reset_disabled to True if going from disabled to managed
 
         Returns str new movie status
         '''
@@ -947,7 +944,7 @@ class Manage(object):
         else:
             return ''
 
-        if current_status == 'Disabled':
+        if current_status == 'Disabled' and not reset_disabled:
             return 'Disabled'
 
         result_status = core.sql.get_distinct('SEARCHRESULTS', 'status', 'imdbid', imdbid)

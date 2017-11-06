@@ -353,29 +353,31 @@ class SQL(object):
             logging.error('Unable to get list of user\'s movies.')
             return []
 
-    def status_count(self, status):
+    def status_count(self, status=[]):
         ''' Gets count of movies in MOVIES with status
         status (list): statuses of movies to count
 
         If status is Finished will count both Finished and Disabled
 
-        Returns tuple (int, int) of (total count, matching count)
+        Returns list [int, int] of [total count, matching count]
         '''
         if 'Finished' in status:
             status.append('Disabled')
 
-        command = 'SELECT Count(*), SUM(CASE WHEN STATUS IN ("Finished", "Disabled") THEN 1 END) from MOVIES'
+        command = 'SELECT Count(*), SUM(CASE WHEN STATUS IN ("{}") THEN 1 END) from MOVIES'.format(', '.join(status))
 
         result = self.execute([command])
 
+        c = [0,0]
         if result:
             r = result.fetchone()
-            print(r)
-            return r
+            for i, v in enumerate(r):
+                print(i, v)
+                c[i] = 0 if not v else v
+            return c
         else:
-            print("ERRRRRR")
             logging.error('Unable to get count of user\'s movies.')
-            return (0, 0)
+            return [0, 0]
 
     def get_movie_details(self, idcol, idval):
         ''' Returns dict of single movie details from MOVIES.
@@ -463,13 +465,13 @@ class SQL(object):
 
         Removes from MOVIE, SEARCHRESULTS, and deletes poster. Keeps MARKEDRESULTS.
 
-        Returns bool (True/False on success or None if movie not found)
+        Returns bool
         '''
 
         logging.debug('Removing {} from database.'.format(imdbid))
 
         if not self.row_exists('MOVIES', imdbid=imdbid):
-            return None
+            return False
 
         if not self.delete('MOVIES', 'imdbid', imdbid):
             return False

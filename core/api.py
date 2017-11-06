@@ -245,6 +245,7 @@ class API(object):
 
         logging.info('API request remove movie {}'.format(imdbid))
 
+        # TODO: check output of method
         return core.manage.remove_movie(imdbid)
 
     def version(self):

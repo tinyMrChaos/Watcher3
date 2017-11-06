@@ -72,6 +72,8 @@ class App(object):
         return defaults
 
     # All dispatching methods from here down
+    index_template = Template(filename='templates/index.html', module_directory=core.MAKO_CACHE)
+
     status_template = Template(filename='templates/library/status.html', module_directory=core.MAKO_CACHE)
     manage_template = Template(filename='templates/library/manage.html', module_directory=core.MAKO_CACHE)
     import_template = Template(filename='templates/library/import.html', module_directory=core.MAKO_CACHE)
@@ -107,7 +109,7 @@ class App(object):
 
     @cherrypy.expose
     def _test(self):
-        return Template(filename='templates/index.html', module_directory=core.MAKO_CACHE).render()
+        return App.index_template.render()
 
     @cherrypy.expose
     def library(self, *path):
@@ -226,7 +228,7 @@ class App(object):
         return App.navbar_template.render(url_base=core.URL_BASE, current=current, show_logout=show_logout)
 
 
-class WebSocketHandler(WebSocket):
+class WebSocketHandler(WebSocket, core.websockets.WS):
 
     def __init__(self, *args, **kwargs):
         WebSocket.__init__(self, *args, **kwargs)
@@ -235,9 +237,20 @@ class WebSocketHandler(WebSocket):
     def received_message(self, m):
         msg = json.loads(m.data)
 
-        r = getattr(ws, msg['method'])(*msg['args'], **msg['kwargs'])
-        if r:
-            self.send(json.dumps(r))
+        getattr(self, msg['method'])(*msg['args'], **msg['kwargs'])
 
     def closed(self, code, reason="."):
         core.WS_CLIENTS.remove(self)
+
+    def send_set(self, data, ref=''):
+        self.send(json.dumps({'command': 'set', 'ref': ref, 'data': data}))
+
+    def send_notification(self, notif):
+        self.send(json.dumps({'command': 'notify', 'notification': notif}))
+
+    def update_movie(self, imdbid, data):
+        self.send(json.dumps({'command': 'update_movie', 'imdbid': imdbid, 'data': data}))
+
+    def send_all(self, method, *args, **kwargs):
+        for i in core.WS_CLIENTS:
+            getattr(i, method)(*args, **kwargs)
