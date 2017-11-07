@@ -2,6 +2,7 @@
 <div id="navbar">
 
 <el-menu :default-active="current_page" mode="horizontal" @select="page_change">
+    <img src='/static/images/logo.png' class='logo'/>
     <el-submenu index="1">
         <template slot="title">Library</template>
         <el-menu-item index="1-1">
@@ -61,6 +62,11 @@ div#navbar{
 
 div#navbar i{
     font-size: 1.25em;
+}
+
+img.logo{
+    float: left;
+    outline: none;
 }
 
 </style>

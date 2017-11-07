@@ -34,7 +34,10 @@ class socket {
         }
     }
     recv(msg){
+        var route_page = app.$router.currentRoute.name
         var m = JSON.parse(msg.data)
+        console.log(route_page)
+        console.log(m)
         if(m.command == 'set'){
             try {
                 var chain = m.ref.split('.');
@@ -52,7 +55,9 @@ class socket {
             }
         } else if (m.command == 'notify'){
             app.$notify(m.notification)
-        } else if (m.command == 'update_movie'){
+        } else if (m.command == 'message'){
+            app.$message(m.message)
+        } else if (m.command == 'update_movie' && ['status', 'manage'].indexOf(route_page)  != -1){
             try {
                 if(app.$refs.view.movies){
                     for(var i=0; i < app.$refs.view.movies.length; i++){
@@ -67,6 +72,34 @@ class socket {
             } catch (err) {
                 //console.log('uhhhhhh', err)
             }
+        } else if (m.command == 'remove_movie' &&  ['status', 'manage'].indexOf(route_page)  != -1){
+            try {
+                if(app.$refs.view.movies){
+                    for(var i=0; i < app.$refs.view.movies.length; i++){
+                        if(app.$refs.view.movies[i] && app.$refs.view.movies[i].imdbid == m.imdbid){
+                            app.$refs.view.movies.splice(i, 1);
+                            break
+                        }
+                    }
+                }
+            } catch (err) {
+                //console.log('uhhhhhh', err)
+            }
+        } else if (m.command == 'release_status'){
+            try {
+                if(app.$refs.view.$refs.status_modal.search_results){
+                    for(var i=0; i < app.$refs.view.$refs.status_modal.search_results.length; i++){
+                        if(app.$refs.view.$refs.status_modal.search_results[i] && app.$refs.view.$refs.status_modal.search_results[i].guid == m.guid){
+                            app.$refs.view.$refs.status_modal.search_results[i].status = m.status
+                            break
+                        }
+                    }
+                }
+            } catch (err) {
+                //console.log('uhhhhhh', err)
+            }
+        } else {
+            console.log('METHOD NOT FOUND')
         }
     }
     sockopened(){
@@ -104,8 +137,8 @@ Vue.component('status-modal', templates['library']['status_modal'])
 router = new VueRouter({
     mode: 'hash',
     base: window.location.href,
-    routes: [{path: '/library/status', component: templates['library']['status']},
-             {path: '/library/add', component: templates['library']['add']}
+    routes: [{path: '/library/status', component: templates['library']['status'], name: 'status'},
+             {path: '/library/add', component: templates['library']['add'], name: 'add'}
             ]
 })
 

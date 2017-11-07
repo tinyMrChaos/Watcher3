@@ -248,8 +248,17 @@ class WebSocketHandler(WebSocket, core.websockets.WS):
     def send_notification(self, notif):
         self.send(json.dumps({'command': 'notify', 'notification': notif}))
 
+    def send_message(self, message):
+        self.send(json.dumps({'command': 'message', 'message': message}))
+
     def update_movie(self, imdbid, data):
         self.send(json.dumps({'command': 'update_movie', 'imdbid': imdbid, 'data': data}))
+
+    def remove_movie(self, imdbid):
+        self.send(json.dumps({'command': 'remove_movie', 'imdbid': imdbid}))
+
+    def release_status(self, guid, status):
+        self.send(json.dumps({'command': 'release_status', 'guid': guid, 'status': status}))
 
     def send_all(self, method, *args, **kwargs):
         for i in core.WS_CLIENTS:

@@ -2,12 +2,12 @@
 <div id="status">
     <el-row id='view_options' type="flex" justify="space-around">
         <el-button-group>
-            <el-button icon="el-icon-menu" :type="layout == 'posters' ? 'primary' : null" v-on:click="set_layout('posters')">
+            <el-button icon="el-icon-menu" :type="layout == 'posters' ? 'primary' : 'default'" v-on:click="set_layout('posters')">
             </el-button>
-            <el-button type="primary" :type="layout == 'rows' ? 'primary' : null" v-on:click="set_layout('rows')">
+            <el-button type="primary" :type="layout == 'rows' ? 'primary' : 'default'" v-on:click="set_layout('rows')">
                 <i class="mdi mdi-view-agenda"></i>
             </el-button>
-            <el-button type="primary" :type="layout == 'mini' ? 'primary' : null" v-on:click="set_layout('mini')">
+            <el-button type="primary" :type="layout == 'mini' ? 'primary' : 'default'" v-on:click="set_layout('mini')">
                 <i class="mdi mdi-view-list"></i>
             </el-button>
         </el-button-group>
@@ -15,6 +15,7 @@
             <el-select v-model="sort_key" v-on:change="set_sort_key">
                 <el-option value="sort_title" label="Title">Title</el-option>
                 <el-option value="year" label="Year">Year</el-option>
+                <el-option value="status" label="Status">Status</el-option>
             </el-select>
             <el-button v-on:click="toggle_sort_direction($event)">
                 <i v-bind:class="'mdi ' + (sort_direction === 'asc' ?  'mdi-arrow-up': 'mdi-arrow-down')"></i>
@@ -39,13 +40,15 @@
                 <div :class="'status ' + movie.status">{{movie.status == 'Disabled' ? 'Finished' : movie.status}}</div>
                 <span class="score" color="white" text-color="white"><i class="mdi mdi-star"></i>{{movie.score}}</span>
             </div>
-            <div v-if="layout == 'rows'" class="card movie_row" v-bind:key="movie.imdbid" v-on:click="modal_open = true">
+            <div v-if="layout == 'rows'" class="card movie_row" v-bind:key="movie.imdbid" v-on:click="modal_open = true; modal_movie = movie">
                 <img v-bind:src="'/posters/' + (movie.poster || 'missing_poster.jpg')"/>
             </div>
+            <div v-if="layout == 'mini'" class='movie_mini' v-bind:key='movie.imdbid' v-on:click="modal_open = true; modal_movie = movie">
+                <div :class="'mini_status status ' + movie.status" :title='movie.status'></div>
+                <span>{{movie.title}}</span>
+                <span class='year'>{{movie.year}}</span>
+            </div>
         </template>
-        <div v-if="layout == 'mini'">
-            Doesnt exist yet but will be table
-        </div>
     </el-row>
 
     <el-dialog id="movie_modal" :title="this.modal_movie.title + ' (' + this.modal_movie.year + ')'" :visible="modal_open" v-on:open="modal_opened" v-on:close="modal_closed">
@@ -152,7 +155,7 @@ module.exports = {
         app.socket.send('movie_page', [this.sort_key, this.sort_direction], {'offset': 0})
     },
     mounted: function(){
-
+        this.name == 'status'
     }
 }
 
@@ -253,5 +256,30 @@ div#movies *{
     height: 6em;
     border-radius: 4px 0 0 4px;
     padding: 0;
+}
+
+.movie_mini{
+    width: 46%;
+    padding: 0.25em 1%;
+    margin: 0 1%;
+    cursor: pointer;
+}
+
+.movie_mini:nth-child(4n+1),
+.movie_mini:nth-child(4n+2){
+    background: rgba(0,0,0,.05)
+}
+
+.mini_status{
+    display: inline-block;
+    height: .75em;
+    width: .75em;
+    line-height: 1em;
+    border-radius: 4px;
+}
+
+.movie_mini .year{
+    font-size: 0.75em;
+    float: right;
 }
 </style>

@@ -1,11 +1,12 @@
 import core
-from core import searcher
+from core import searcher, snatcher
 import logging
 import os
 
 logging = logging.getLogger(__name__)
 
 searcher = searcher.Searcher()
+snatcher = snatcher.Snatcher()
 
 
 class WS(object):
@@ -122,13 +123,14 @@ class WS(object):
         '''
         print(imdbid, delete)
 
-        return
-
-        f = core.sql.get_movie_details('imdbid', imdbid).get('finished_file')
+        m = core.sql.get_movie_details('imdbid', imdbid)
+        f = m.get('finished_file')
+        title = m['title']
         if core.manage.remove_movie(imdbid):
-            pass #success
+            pass
         else:
-            pass #fail
+            # TODO: send notification
+            return
 
         if delete:
             try:
@@ -136,3 +138,29 @@ class WS(object):
                 os.unlink(f)
             except Exception as e:
                 logging.error('Unable to delete file {}'.format(f), exc_info=True)
+                # TODO: Send notification
+                return
+        print('SENDING MESSAGE')
+        self.send_all('send_message', {'message': '{} removed from library.'.format(title), 'type': 'info'})
+        self.send_all('remove_movie', imdbid)
+
+    def download_release(self, release, year):
+        torrent_enabled = core.CONFIG['Downloader']['Sources']['torrentenabled']
+
+        usenet_enabled = core.CONFIG['Downloader']['Sources']['usenetenabled']
+
+        if release['type'] == 'nzb' and not usenet_enabled:
+            self.send_notification({'type': 'warning', 'message': 'Release is NZB but no Usent client is enabled.'})
+            return
+        elif release['type'] in ('torrent', 'magnet') and not torrent_enabled:
+            self.send_notification({'type': 'warning', 'message': 'Release is Torrent but no Usent client is enabled.'})
+            return
+
+        release['year'] = year
+        if snatcher.download(release):
+            self.send_notification({'type': 'success', 'message': '{} snatched.'.format(release['title'])})
+            self.send_all('release_status', release['guid'], 'Snatched')
+            return
+        else:
+            self.send_notification({'type': 'error', 'message': 'Unable to read database'})
+            return

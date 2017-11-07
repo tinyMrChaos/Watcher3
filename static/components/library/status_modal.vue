@@ -8,9 +8,9 @@
                         <span v-if="movie.finished_file">
                             <el-checkbox v-model="confirm_trash_file"></el-checkbox>
                             Delete file ({{movie.finished_file}})?
-                        <span>
+                        </span>
 
-                        <el-button class="right" size="mini" type='warning' v-on:click="trash_movie(movie.imdbid)">
+                        <el-button class="left" size="mini" type='warning' v-on:click="trash_movie(movie.imdbid)">
                             Trash <i class="mdi mdi-delete"></i>
                         </el-button>
                     </div>
@@ -111,10 +111,10 @@
             </el-col>
             <el-col :sm="6" :xs="24" style="text-align: center; margin: 0.5em 0;">
                 <el-button-group>
-                    <el-button title="Info" size="small">
+                    <el-button title="Info" size="small" v-on:click="window.open(release.info_link, '_blank')">
                         <i class="mdi mdi-information-outline"></i>
                     </el-button>
-                    <el-button title="Download" size="small">
+                    <el-button title="Download" size="small" v-on:click="app.socket.send('download_release', [release, movie.year])">
                         <i class="mdi mdi-arrow-down-bold"></i>
                     </el-button>
                     <el-button title="Mark Bad" size="small">
@@ -157,9 +157,8 @@ module.exports = {
             app.socket.send('backlog_search', [imdbid]);
         },
         trash_movie: function(imdbid){
-            console.log(imdbid, this.confirm_trash_file)
-            //app.socket.send('trash_movie', [imdbid, confirm_trash_file])
-
+            app.socket.send('trash_movie', [imdbid, this.confirm_trash_file])
+            this.$parent.$parent.modal_open = false;
         }
     },
     mounted: function(){

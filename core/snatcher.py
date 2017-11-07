@@ -155,12 +155,12 @@ class Snatcher():
 
         Executes snatched plugins if successful
 
-        Returns dict from helper method snatch_nzb or snatch_torrent
+        Returns dict
         '''
         logging.info('Sending {} to download client.'.format(data['title']))
 
         if data['type'] == 'import':
-            return {'response': False, 'error': 'Cannot download imports.'}
+            return {'success': False, 'error': 'Cannot download Imported releases.'}
 
         imdbid = data['imdbid']
         resolution = data['resolution']
@@ -174,22 +174,22 @@ class Snatcher():
             if core.CONFIG['Downloader']['Sources']['usenetenabled']:
                 response = self.snatch_nzb(data)
             else:
-                return {'response': False, 'message': 'NZB submitted but nzb snatching is disabled.'}
+                return {'success': False, 'error': 'No Usenet download client enabled.'}
 
         if data['type'] in ('torrent', 'magnet'):
             if core.CONFIG['Downloader']['Sources']['torrentenabled']:
                 response = self.snatch_torrent(data)
             else:
-                return {'response': False, 'message': 'Torrent submitted but torrent snatching is disabled.'}
+                return {'success': False, 'error': 'No Torrent download client enabled.'}
 
         if response['response'] is True:
             download_client = response['download_client']
             downloadid = response['downloadid']
 
             plugins.snatched(title, year, imdbid, resolution, kind, download_client, downloadid, indexer, info_link)
-            return response
+            return {'success': True}
         else:
-            return response
+            return {'success': False, 'error': response['error']}
 
     def snatch_nzb(self, data):
         ''' Sends nzb to download client
