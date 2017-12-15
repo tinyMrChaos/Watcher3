@@ -95,86 +95,18 @@
 
             <h1>${_('Torrent Indexers')}</h1>
             <form class="form-horizontal well" data-category="torrent">
+                % for id in providers:
                 <div class="col-md-6">
                     <div class="input-group">
                         <span class="input-group-addon box_box">
-                            <i class="mdi mdi-checkbox-blank-outline c_box" id="limetorrents" value="${config['Torrent']['limetorrents']}"></i>
+                            <i class="mdi mdi-checkbox-blank-outline c_box" id="${providers[id].id}" value="${config['Torrent'][providers[id].id]}"></i>
                         </span>
                         <span class="input-group-item form-control">
-                            LimeTorrents
+                            ${providers[id].name}
                         </span>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-addon box_box">
-                            <i class="mdi mdi-checkbox-blank-outline c_box" id="rarbg" value="${config['Torrent']['rarbg']}"></i>
-                        </span>
-                        <span class="input-group-item form-control">
-                            Rarbg
-                        </span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-addon box_box">
-                            <i class="mdi mdi-checkbox-blank-outline c_box" id="skytorrents" value="${config['Torrent']['skytorrents']}"></i>
-                        </span>
-                        <span class="input-group-item form-control">
-                            SkyTorrents (${_('backlog only')})
-                        </span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-addon box_box">
-                            <i class="mdi mdi-checkbox-blank-outline c_box" id="thepiratebay" value="${config['Torrent']['thepiratebay']}"></i>
-                        </span>
-                        <span class="input-group-item form-control">
-                            ThePirateBay
-                        </span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-addon box_box">
-                            <i class="mdi mdi-checkbox-blank-outline c_box" id="torrentdownloads" value="${config['Torrent']['torrentdownloads']}"></i>
-                        </span>
-                        <span class="input-group-item form-control">
-                            TorrentDownloads
-                        </span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-addon box_box">
-                            <i class="mdi mdi-checkbox-blank-outline c_box" id="torrentz2" value="${config['Torrent']['torrentz2']}"></i>
-                        </span>
-                        <span class="input-group-item form-control">
-                            Torrentz2
-                        </span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-addon box_box">
-                            <i class="mdi mdi-checkbox-blank-outline c_box" id="yts" value="${config['Torrent']['yts']}"></i>
-                        </span>
-                        <span class="input-group-item form-control">
-                            YTS
-                        </span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-addon box_box">
-                            <i class="mdi mdi-checkbox-blank-outline c_box" id="zooqle" value="${config['Torrent']['zooqle']}"></i>
-                        </span>
-                        <span class="input-group-item form-control">
-                            Zooqle (${_('backlog only')})
-                        </span>
-                    </div>
-                </div>
+                % endfor
             </form>
 
             <a id="save_settings" class="btn btn-success pull-right" onclick="save_settings(event, this)">

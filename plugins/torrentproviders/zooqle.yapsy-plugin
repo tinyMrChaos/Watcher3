@@ -1,0 +1,9 @@
+[Core]
+Name = Zooqle
+Module = zooqle
+
+[Documentation]
+Author = NoSmokingBandit
+Version = 1.0
+Website = https://github.com/nosmokingbandit/Watcher3
+Description = Torrentprovider for Zooqle

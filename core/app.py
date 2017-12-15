@@ -10,6 +10,8 @@ from mako.template import Template
 import sys
 import time
 
+from core.providers import torrent
+
 locale_dir = os.path.join(core.PROG_PATH, 'locale')
 
 
@@ -146,7 +148,7 @@ class App(object):
     @cherrypy.expose
     def settings(self, *path):
         page = path[0] if len(path) > 0 else 'server'
-
+        tor = torrent.Torrent()
         if page == 'server':
             themes = [i[:-4] for i in os.listdir('static/css/themes/') if i.endswith('.css') and os.path.isfile(os.path.join(core.PROG_PATH, 'static/css/themes', i))]
             return App.server_template.render(config=core.CONFIG['Server'], themes=themes, version=core.CURRENT_HASH or '', languages=core.LANGUAGES.keys(), **self.defaults())
@@ -155,7 +157,7 @@ class App(object):
         elif page == 'quality':
             return App.quality_template.render(config=core.CONFIG['Quality'], sources=core.SOURCES, **self.defaults())
         elif page == 'indexers':
-            return App.indexers_template.render(config=core.CONFIG['Indexers'], **self.defaults())
+            return App.indexers_template.render(config=core.CONFIG['Indexers'], providers=tor.get_torrent_providers(), **self.defaults())
         elif page == 'downloader':
             return App.downloader_template.render(config=core.CONFIG['Downloader'], **self.defaults())
         elif page == 'postprocessing':
