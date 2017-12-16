@@ -1,0 +1,9 @@
+[Core]
+Name = Torrentday
+Module = torrentday
+
+[Documentation]
+Author = Kristian Nordman
+Version = 1.0
+Website = https://github.com/tinyMrChaos/Watcher3
+Description = Torrentprovider for Torrentday

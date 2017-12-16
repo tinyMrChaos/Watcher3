@@ -58,6 +58,14 @@ class Config():
             json.dump(config, f, indent=4, sort_keys=True)
         return 'Config created at {}'.format(self.file)
 
+    def update(self, d, u):
+        for k, v in u.items():
+            if isinstance(v, collections.Mapping):
+                d[k] = self.update(d.get(k, {}), v)
+            else:
+                d[k] = v
+        return d
+
     def write(self, data):
         ''' Writes a dict to the config file.
         :param data: dict of Section with nested dict of keys and values:
@@ -75,8 +83,7 @@ class Config():
 
         diff = Comparisons.compare_dict(data, core.CONFIG)
 
-        core.CONFIG.update(data)
-
+        core.CONFIG = self.update(core.CONFIG, data)
         with open(self.file, 'w') as f:
             json.dump(core.CONFIG, f, indent=4, sort_keys=True)
 

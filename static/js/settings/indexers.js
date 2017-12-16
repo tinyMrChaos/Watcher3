@@ -119,9 +119,28 @@ function _get_settings(){
         settings["Torrent"][$this.attr("id")] = is_checked($this);
     });
 
+    $(".textsetting").each(function(i, elem){
+        parts = elem.id.split(".");
+
+        if(parts[1].indexOf('password') === -1) {
+            if (!("Config" in settings))
+                settings["Config"] = {};
+            if (!(parts[0] in settings["Config"]))
+                settings["Config"][parts[0]] = {};
+
+            settings["Config"][parts[0]][parts[1]] = elem.value;
+
+        } else if (elem.value !== "unchanged"){
+            settings["Config"][parts[0]][parts[1]] = elem.value;
+        }
+    });
+
     if(blanks == true){
         return false;
     };
+
+    console.log(settings);
+
 
     return {"Indexers": settings}
 }

@@ -95,16 +95,43 @@
 
             <h1>${_('Torrent Indexers')}</h1>
             <form class="form-horizontal well" data-category="torrent">
-                % for id in providers:
+                % for id in sorted(providers):
                 <div class="col-md-6">
                     <div class="input-group">
                         <span class="input-group-addon box_box">
-                            <i class="mdi mdi-checkbox-blank-outline c_box" id="${providers[id].id}" value="${config['Torrent'][providers[id].id]}"></i>
+                            <i class="mdi mdi-checkbox-blank-outline c_box" id="${id}" value="${config['Torrent'][id] if id in config['Torrent'] else False}"></i>
                         </span>
                         <span class="input-group-item form-control">
                             ${providers[id].name}
                         </span>
                     </div>
+                    % if hasattr(providers[id], 'fields'):
+                        <span class="input-group-addon box_box">
+                        % for key in sorted(providers[id].fields.keys()):
+                        <%
+                            name = providers[id].fields[key]
+                            if "Config" in config:
+                                if id in config['Config']:
+                                    value = config['Config'][id][key] if key in config['Config'][id] else ""
+                                else:
+                                    value = ""
+                            else:
+                                value = ""
+
+                        %>
+                            <span style="float:left; clear: both;">
+                                <label for="" style="width: 100px; text-align: left;">${name}</label>
+                                % if "password" in key:
+                                <input type="password" class="mdi input textsetting" id="${id}.${key}" value="unchanged" />
+                                % else:
+                                <input class="mdi input textsetting" id="${id}.${key}" value="${value}" />
+                                % endif
+                            </span>
+
+                        % endfor
+
+                        </span>
+                    % endif
                 </div>
                 % endfor
             </form>
