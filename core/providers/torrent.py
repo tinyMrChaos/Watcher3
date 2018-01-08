@@ -5,8 +5,9 @@ from yapsy.PluginManager import PluginManager
 
 import core
 from core.helpers import Url
+from core.providers.torrentbase import TorrentProvider
+from core.providers.torrentproviders import *
 from core.providers.base import NewzNabProvider
-from core.providers.providers import TorrentProvider
 
 logging = logging.getLogger(__name__)
 
@@ -44,22 +45,6 @@ class Torrent(NewzNabProvider):
         self.feed_type = 'torrent'
         return
 
-    def get_torrent_providers(self):
-        # Create plugin manager
-        manager = PluginManager(categories_filter={"Torrent": TorrentProvider})
-        manager.setPluginPlaces(["plugins/torrentproviders"])
-
-        # Load torrentproviders
-        manager.locatePlugins()
-        manager.loadPlugins()
-
-        providers = {}
-
-        for plugin in manager.getPluginsOfCategory("Torrent"):
-            # plugin.plugin_object is an instance of the plugin
-            providers[plugin.plugin_object.id] = plugin.plugin_object
-
-        return providers
 
     def search_all(self, imdbid, title, year):
         ''' Performs backlog search for all indexers.
@@ -108,19 +93,18 @@ class Torrent(NewzNabProvider):
         title = Url.normalize(title)
         year = Url.normalize(str(year))
 
-        providers = self.get_torrent_providers()
-        logging.info("Starting search")
-        for ind in torrent_indexers:
-            if torrent_indexers[ind]:
-                try:
-                    logging.info("Searching {}".format(ind))
 
-                    indexer_result = providers[ind].search(imdbid, None)
-                    for i in indexer_result:
-                        if i not in results:
-                            results.append(i)
-                except KeyError as e:
-                    logging.warning("Torrentprovider {} enabled for searching but not found".format(ind))
+        logging.info("Starting search")
+
+        for provider in TorrentProvider.__subclasses__():
+            if torrent_indexers[provider.id]:
+                logging.info("Searching {}".format(provider.name))
+
+                indexer_result = provider.search(imdbid, term)
+
+                for i in indexer_result:
+                    if i not in results:
+                        results.append(i)
 
         self.imdbid = None
         return results
@@ -139,18 +123,16 @@ class Torrent(NewzNabProvider):
 
         torrent_indexers = core.CONFIG['Indexers']['Torrent']
 
-        providers = self.get_torrent_providers()
         logging.info("Starting rss retrieval")
-        for ind in torrent_indexers:
-            if torrent_indexers[ind]:
-                try:
-                    logging.info("Searching {}".format(ind))
-                    indexer_result = providers[ind].get_rss()
-                    for i in indexer_result:
-                        if i not in results:
-                            results.append(i)
-                except KeyError as e:
-                    logging.error("Torrentprovider {} enabled for RSS but not found".format(ind))
+
+        for provider in TorrentProvider.__subclasses__():
+            if torrent_indexers[provider.id]:
+                logging.info("Searching {}".format(provider.name))
+                indexer_result = provider.get_rss()
+                for i in indexer_result:
+                    if i not in results:
+                        results.append(i)
+
 
         return results
 

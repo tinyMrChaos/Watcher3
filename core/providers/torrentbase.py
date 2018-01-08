@@ -8,23 +8,27 @@ class TorrentProvider(object):
     name = "Base Provider"
     fields = {}
 
-    def search(self, imdbid, term):
+    @staticmethod
+    def search(imdbid, term):
         pass
 
-    def get_rss(self):
+    @staticmethod
+    def get_rss():
         pass
 
-    def parse(self, data, imdbbid=None, term=None):
+    @staticmethod
+    def parse(data, imdbbid=None, term=None):
         pass
 
-    def getConfig(self, name):
+    @staticmethod
+    def getConfig(name):
         if "Indexers" not in core.CONFIG:
             return None
 
         if "Config" not in core.CONFIG["Indexers"]:
             return None
 
-        if self.id not in core.CONFIG["Indexers"]["Config"]:
+        if name not in core.CONFIG["Indexers"]["Config"]:
             return None
 
-        return core.CONFIG["Indexers"]["Config"][self.id]
+        return core.CONFIG["Indexers"]["Config"][name]

@@ -2,8 +2,9 @@ import core
 from core import searcher
 from core.movieinfo import TMDB
 import cherrypy
-from core.providers import torrent
 import logging
+
+from core.providers.torrentbase import TorrentProvider
 
 logging = logging.getLogger(__name__)
 
@@ -173,14 +174,15 @@ class API(object):
             return {'response': True, 'config': core.CONFIG}
         elif params['mode'] == 'debug':
             if params['debug'] == 'searcher':
+                logging.debug("debugging searchers")
                 search = searcher.Searcher()
                 search.search_all()
                 return {'response':True}
 
             if params['debug'] == 'torrentproviders':
-                t = torrent.Torrent()
-                providers = t.get_torrent_providers()
-                return {'response': True, 'providers' : providers }
+                providers = TorrentProvider.__subclasses__()
+                print(providers)
+                return True
 
         else:
             return {'response': False, 'error': 'invalid mode'}

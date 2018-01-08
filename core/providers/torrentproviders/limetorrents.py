@@ -5,33 +5,22 @@ from xmljson import gdata
 import core
 from core import proxy
 from core.helpers import Url
-from core.providers.providers import TorrentProvider
+from core.providers.torrentbase import TorrentProvider
 
 logging = logging.getLogger(__name__)
 
+classname = "LimeTorrents"
+class LimeTorrents(TorrentProvider):
 
-class Torrentday(TorrentProvider):
+    id = "limetorrents"
+    name = "LimeTorrents"
 
-    id = "torrentday"
-    name = "Torrentday"
-
-    fields = {
-        "username" : "Username",
-        "password" : "Password",
-        "cookies"  : "Cookies"
-    }
-
-    def __init__(self):
-        logging.info("Initialized Torrentday provider")
-        self.username = self.getConfig("username")
-        self.password = self.getConfig('password')
-        self.cookies = self.getConfig('cookies')
-
-    def search(self, imdbid, term):
+    @staticmethod
+    def search(imdbid, term):
         proxy_enabled = core.CONFIG['Server']['Proxy']['enabled']
 
-        logging.info('Performing backlog search on Torrentday for {}.'.format(imdbid))
-        """
+        logging.info('Performing backlog search on LimeTorrents for {}.'.format(imdbid))
+
         url = 'https://www.limetorrents.cc/searchrss/{}'.format(term)
 
         try:
@@ -41,7 +30,7 @@ class Torrentday(TorrentProvider):
                 response = Url.open(url).text
 
             if response:
-                return self.parse(response, imdbid)
+                return LimeTorrents.parse(response, imdbid)
             else:
                 return []
         except (SystemExit, KeyboardInterrupt):
@@ -49,13 +38,13 @@ class Torrentday(TorrentProvider):
         except Exception as e:
             logging.error('LimeTorrent search failed.', exc_info=True)
             return []
-        """
-        return []
-    def get_rss(self):
+
+    @staticmethod
+    def get_rss():
         proxy_enabled = core.CONFIG['Server']['Proxy']['enabled']
 
-        logging.info('Fetching latest RSS from Torrentday.')
-        """
+        logging.info('Fetching latest RSS from LimeTorrents.')
+
         url = 'https://www.limetorrents.cc/rss/16/'
 
         try:
@@ -65,7 +54,7 @@ class Torrentday(TorrentProvider):
                 response = Url.open(url).text
 
             if response:
-                return self.parse(response, None)
+                return LimeTorrents.parse(response, None)
             else:
                 return []
         except (SystemExit, KeyboardInterrupt):
@@ -73,12 +62,11 @@ class Torrentday(TorrentProvider):
         except Exception as e:
             logging.error('LimeTorrent RSS fetch failed.', exc_info=True)
             return []
-        """
-        return []
 
-    def parse(self, xml, imdbid=None, term=None):
-        logging.info('Parsing Torrentday results.')
-        """
+    @staticmethod
+    def parse(xml, imdbid=None, term=None):
+        logging.info('Parsing LimeTorrents results.')
+
         try:
             items = gdata.data(fromstring(xml))['rss']['channel']['item']
         except Exception as e:
@@ -116,8 +104,6 @@ class Torrentday(TorrentProvider):
             except Exception as e:
                 logging.error('Error parsing LimeTorrents XML.', exc_info=True)
                 continue
-        """
-        results = []
-        logging.info('Found {} results from LimeTorrents.'.format(len(results)))
 
+        logging.info('Found {} results from LimeTorrents.'.format(len(results)))
         return results

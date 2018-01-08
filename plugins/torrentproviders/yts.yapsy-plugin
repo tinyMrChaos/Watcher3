@@ -1,9 +1,0 @@
-[Core]
-Name = YTS
-Module = yts
-
-[Documentation]
-Author = NoSmokingBandit
-Version = 1.0
-Website = https://github.com/nosmokingbandit/Watcher3
-Description = Torrentprovider for YTS

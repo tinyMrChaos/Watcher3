@@ -1,9 +1,0 @@
-[Core]
-Name = Torrentz2
-Module = torrentz2
-
-[Documentation]
-Author = NoSmokingBandit
-Version = 1.0
-Website = https://github.com/nosmokingbandit/Watcher3
-Description = Torrentprovider for Torrentz2
