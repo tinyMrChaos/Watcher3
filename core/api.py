@@ -2,6 +2,8 @@ import core
 from core import searcher
 from core.movieinfo import TMDB
 import cherrypy
+import threading
+
 import logging
 
 from core.providers.torrentbase import TorrentProvider
@@ -89,6 +91,24 @@ mode=version
         Response:
             {'version': '4fcdda1df1a4ff327c3219311578d703a288e598', 'api_version': 1.0}
 
+mode=server_shutdown
+    Description:
+        Gracefully terminate Watcher server and child processes.
+        Shutdown may be instant or delayed to wait for threaded tasks to finish.
+        Returns confirmation that request was received.
+
+    Example:
+        ?apikey=123456789&mode=shutdown
+
+mode=server_restart
+    Description:
+        Gracefully restart Watcher server.
+        Shutdown may be instant or delayed to wait for threaded tasks to finish.
+        Returns confirmation that request was received.
+
+    Example:
+        ?apikey=123456789&mode=restart
+
 
 # API Version
 Methods added to the api or minor adjustments to existing methods will increase the version by X.1
@@ -172,6 +192,15 @@ class API(object):
 
         elif params['mode'] == 'getconfig':
             return {'response': True, 'config': core.CONFIG}
+
+        elif params['mode'] == 'server_shutdown':
+            threading.Timer(1, core.shutdown).start()
+            return {'response': True}
+
+        elif params['mode'] == 'server_restart':
+            threading.Timer(1, core.restart).start()
+            return {'response': True}
+
         elif params['mode'] == 'debug':
             if params['debug'] == 'searcher':
                 logging.debug("debugging searchers")

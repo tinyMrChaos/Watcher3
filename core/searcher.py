@@ -131,12 +131,12 @@ class Searcher():
 
         today = datetime.datetime.today().replace(second=0, microsecond=0)
 
+        if core.CONFIG['Search']['verifyreleases'] == 'predb':
+            self.predb.check_all()
+
         movies = core.sql.get_user_movies()
         if not movies:
             return
-
-        if core.CONFIG['Search']['verifyreleases'] == 'predb':
-            self.predb.check_all()
 
         # backlog_movies = [i for i in movies if i['backlog'] != 1 and i['status'] is not 'Disabled' and self.verify(i, today=today)]
         backlog_movies = [i for i in movies if i['status'] is not 'Disabled' and self.verify(i, today=today)]
@@ -397,7 +397,7 @@ class Searcher():
         logging.info('Determining source media for {}'.format(result['title']))
 
         title = result['title']
-        if any(i in title for i in ('4K', 'UHD', '2160P')):
+        if any(i in title.upper() for i in ('4K', 'UHD', '2160P')):
             resolution = '4K'
         elif '1080' in title:
             resolution = '1080P'

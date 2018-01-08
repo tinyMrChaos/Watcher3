@@ -1,13 +1,17 @@
+import json
 import logging
+import datetime
+import time
+import xml.etree.cElementTree as ET
 from xml.etree.cElementTree import fromstring
-from xmljson import gdata
-from yapsy.PluginManager import PluginManager
-
+from xmljson import yahoo
 import core
+from core import proxy
 from core.helpers import Url
 from core.providers.torrentbase import TorrentProvider
 from core.providers.torrentproviders import *
 from core.providers.base import NewzNabProvider
+
 
 logging = logging.getLogger(__name__)
 
@@ -44,7 +48,6 @@ class Torrent(NewzNabProvider):
     def __init__(self):
         self.feed_type = 'torrent'
         return
-
 
     def search_all(self, imdbid, title, year):
         ''' Performs backlog search for all indexers.
@@ -153,7 +156,7 @@ class Torrent(NewzNabProvider):
         try:
             xml = Url.open(url).text
 
-            caps = gdata.data(fromstring(xml))['caps']['searching']['movie-search']['supportedParams']
+            caps = yahoo.data(fromstring(xml))['caps']['searching']['movie-search']['supportedParams']
 
             core.sql.write('CAPS', {'url': url_base, 'caps': caps})
         except Exception as e:

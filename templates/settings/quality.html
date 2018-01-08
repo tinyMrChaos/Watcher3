@@ -30,9 +30,9 @@ user_profiles = {k: v for k, v in config['Profiles'].items() if k != 'Default'}
                 <div class="panel-body">
                     <ul class="sources sortable">
                         %for src in sources:
-                        <li class="source" data-source="${src}" data-sort="${profile['Sources'][src][1]}">
+                        <li class="source" data-source="${src}" data-sort="${profile['Sources'].get(src, [None, 99])[1]}">
                             <i class="mdi mdi-drag-horizontal sortable_handle"></i>
-                            <i class="mdi mdi-checkbox-blank-outline c_box" value="${profile['Sources'][src][0]}"></i>
+                            <i class="mdi mdi-checkbox-blank-outline c_box" value="${profile['Sources'].get(src, [False, None])[0]}"></i>
                             ${src}
                         </li>
                         %endfor
@@ -90,7 +90,7 @@ user_profiles = {k: v for k, v in config['Profiles'].items() if k != 'Default'}
         <link href="${url_base}/static/css/settings/shared.css?v=001" rel="stylesheet">
         <link href="${url_base}/static/css/settings/quality.css?v=001" rel="stylesheet">
 
-        <script src="${url_base}/static/js/settings/shared.js?v=001" type="text/javascript"></script>
+        <script src="${url_base}/static/js/settings/shared.js?v=002" type="text/javascript"></script>
         <script src="${url_base}/static/js/settings/quality.js?v=001" type="text/javascript"></script>
         <script src="${url_base}/static/js/lib/jquery.sortable.min.js?v=001" type="text/javascript"></script>
     </head>

@@ -170,58 +170,6 @@ class ImportPlexLibrary(object):
     '''
 
     @staticmethod
-    def get_libraries(url, token):
-        ''' Gets list of libraries in server url
-        url (str): url and port of plex server
-        token (str): plex auth token for server
-
-        Returns dict ajax-style response
-        '''
-
-        headers = {'X-Plex-Token': token, 'Accept': 'application/json'}
-
-        url = '{}/library/sections'.format(url)
-
-        try:
-            response = Url.open(url, headers=headers)
-            if response.status_code != 200:
-                return {'response', False, 'error', 'Unable to contact Plex server, error {}'.format(response.status_code)}
-            libraries = json.loads(response.text).get('MediaContainer', {}).get('Directory')
-        except Exception as e:
-            logging.error('Unable to contact Plex server.', exc_info=True)
-            return {'response', False, 'error', 'Unable to contact Plex server.'}
-
-        if not libraries:
-            return {'response', False, 'error', 'No libraries found on Plex server.'}
-
-        return {'response': True, 'libraries': libraries}
-
-    @staticmethod
-    def get_movies(url, token, library_key):
-        ''' Get movies from plex library
-        url (str): url of server
-        token (str): plex access token
-        library_key (int): library id #
-
-        Returns dict ajax-style response
-        '''
-
-        headers = {'X-Plex-Token': token, 'Accept': 'application/json'}
-
-        url = '{}/library/sections/{}/all?includeExtras=1'.format(url, library_key)
-
-        try:
-            response = Url.open(url, headers=headers)
-            if response.status_code != 200:
-                return {'response': False, 'error': 'Unable to contact Plex server, error {}'.format(response.status_code)}
-            movies = json.loads(response.text)
-        except Exception as e:
-            logging.error('Unable to contact Plex server.', exc_info=True)
-            return {'response': False, 'error': 'Unable to contact Plex server.'}
-
-        return {'response': True, 'movies': movies}
-
-    @staticmethod
     def read_csv(csv_text):
         ''' Parse plex csv
         csv_text (str): text from csv file
@@ -383,9 +331,9 @@ class ImportCPLibrary(object):
 
             cpm = m['info']
 
-            movie['title'] = cpm.get('original_title', '')
-            movie['year'] = cpm.get('year') if cpm.get('year', 0) != 0 else 'N/A'
-            movie['overview'] = cpm.get('plot', '')
+            movie['title'] = cpm.get('original_title') or ''
+            movie['year'] = cpm.get('year') or 'N/A'
+            movie['overview'] = cpm.get('plot') or ''
             p = (cpm.get('images', {}).get('poster_original') or [''])[0].split('/')[-1]
             if p:
                 movie['poster_path'] = p
@@ -394,9 +342,9 @@ class ImportCPLibrary(object):
 
             movie['url'] = 'https://www.themoviedb.org/movie/{}'.format(cpm.get('tmdb_id', ''))
             movie['vote_average'] = cpm.get('rating', {}).get('imdb', [0])[0]
-            movie['imdbid'] = cpm.get('imdb', None)
-            movie['id'] = cpm.get('tmdb_id', None)
-            ts = cpm.get('release_date', {}).get('theater', None)
+            movie['imdbid'] = cpm.get('imdb')
+            movie['id'] = cpm.get('tmdb_id')
+            ts = cpm.get('release_date', {}).get('theater')
             movie['release_date'] = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d') if ts else None
 
             movie['alternative_titles'] = {'titles': [{'iso_3166_1': 'US',
@@ -463,7 +411,7 @@ class Metadata(object):
             title_date = '{} {}'.format(data['title'], data['year']) if data.get('year') else data['title']
             tmdbdata = self.tmdb.search(title_date, single=True)
             if not tmdbdata:
-                logging.warning('Unable to get data from TheMovieDB for {}'.format(data['imdbid']))
+                logging.warning('Unable to get data from TheMovieDB for {}'.format(data['title']))
                 return data
 
             tmdbdata = tmdbdata[0]
@@ -585,7 +533,7 @@ class Metadata(object):
             if any(a.lower() == qual.lower() for a in aliases):
                 meta_data['source'] = source
                 break
-        meta_data['source'] = meta_data.get('source', None)
+        meta_data.setdefault('source', None)
 
         meta_data['releasegroup'] = meta_data.pop('group', None)
 
@@ -613,7 +561,7 @@ class Metadata(object):
         elif not movie.get('year'):
             movie['year'] = 'N/A'
 
-        movie['added_date'] = movie.get('added_date', str(datetime.date.today()))
+        movie.setdefault('added_date', str(datetime.date.today()))
 
         if movie.get('poster_path'):
             movie['poster'] = '{}.jpg'.format(movie['imdbid'])
@@ -622,7 +570,7 @@ class Metadata(object):
 
         movie['plot'] = movie.get('overview') if not movie.get('plot') else movie.get('plot')
         movie['url'] = 'https://www.themoviedb.org/movie/{}'.format(movie.get('id', movie.get('tmdbid')))
-        movie['score'] = movie.get('score', movie.get('vote_average', 0))
+        movie['score'] = movie.get('score') or movie.get('vote_average') or 0
 
         if not movie.get('status'):
             movie['status'] = 'Waiting'
@@ -804,9 +752,9 @@ class Manage(object):
             response['error'] = _('{} already exists in library.').format(movie['title'])
             return response
 
-        movie['quality'] = movie.get('quality', 'Default')
-        movie['status'] = movie.get('status', 'Waiting')
-        movie['origin'] = movie.get('origin', 'Search')
+        movie.setdefault('quality', 'Default')
+        movie.setdefault('status', 'Waiting')
+        movie.setdefault('origin', 'Search')
 
         poster_path = movie.get('poster_path')
 
@@ -891,7 +839,7 @@ class Manage(object):
             search_result['indexer'] = 'Post-Processing Import'
             if not search_result.get('title'):
                 search_result['title'] = movie_info['title']
-            search_result['size'] = os.path.getsize(movie_info.get('orig_filename', '.'))
+            search_result['size'] = os.path.getsize(movie_info.get('orig_filename') or '.')
             if not search_result['resolution']:
                 search_result['resolution'] = 'Unknown'
 
@@ -958,33 +906,33 @@ class Manage(object):
 
         logging.info('Determining appropriate status for movie {}.'.format(imdbid))
 
-        local_details = core.sql.get_movie_details('imdbid', imdbid)
-        if local_details:
-            current_status = local_details.get('status')
+        movie = core.sql.get_movie_details('imdbid', imdbid)
+        if movie:
+            current_status = movie.get('status')
         else:
             return ''
 
         if current_status == 'Disabled':
             return 'Disabled'
 
+        new_status = None
         result_status = core.sql.get_distinct('SEARCHRESULTS', 'status', 'imdbid', imdbid)
         if 'Finished' in result_status:
-            status = 'Finished'
+            new_status = 'Finished'
         elif 'Snatched' in result_status:
-            status = 'Snatched'
+            new_status = 'Snatched'
         elif 'Available' in result_status:
-            status = 'Found'
-        elif local_details.get('predb') == 'found':
-            status = 'Wanted'
-        else:
-            status = 'Waiting'
+            new_status = 'Found'
 
-        logging.info('Setting MOVIES {} status to {}.'.format(imdbid, status))
-        if core.sql.update('MOVIES', 'status', status, 'imdbid', imdbid):
-            return status
+        if new_status:
+            logging.info('Setting MOVIES {} status to {}.'.format(imdbid, new_status))
+            if core.sql.update('MOVIES', 'status', new_status, 'imdbid', imdbid):
+                return new_status
+            else:
+                logging.error('Could not set {} to {}'.format(imdbid, new_status))
+                return ''
         else:
-            logging.error('Could not set {} to {}'.format(imdbid, status))
-            return ''
+            return 'Wanted' if self.searcher.verify(movie) else 'Waiting'
 
     def get_stats(self):
         ''' Gets stats from database for graphing

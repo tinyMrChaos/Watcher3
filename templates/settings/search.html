@@ -5,7 +5,7 @@
         <link href="${url_base}/static/css/settings/shared.css?v=001" rel="stylesheet">
         <link href="${url_base}/static/css/settings/search.css?v=001" rel="stylesheet">
 
-        <script src="${url_base}/static/js/settings/shared.js?v=001" type="text/javascript"></script>
+        <script src="${url_base}/static/js/settings/shared.js?v=002" type="text/javascript"></script>
         <script src="${url_base}/static/js/settings/search.js?v=001" type="text/javascript"></script>
     </head>
     <body>
@@ -123,7 +123,7 @@
             <h1>${_('Watchlists')}</h1>
 
             <form class="form-horizontal well" data-category="watchlists">
-
+                * (12.19.17) IMDB has disabled RSS lists and may not sync
                 <div class="col-md-6">
                     <label>${_('Sync IMDB Watchlists Every [X] Minutes')}</label>
                     <div class="input-group">
@@ -176,6 +176,13 @@
                     <label>${_('Minimum Score')}</label>
                     <input type="number" id="traktscore" class="form-control" min="0" placeholder="7" value="${config['Watchlists']['traktscore']}">
                 </div>
+
+                <div class="col-md-6">
+                    <label>${_('Trakt Watchlist URLs')}</label>
+                    <input type="text" id="traktrss" class="form-control" placeholder="https://trakt.tv/users/user/lists/movielist.atom?..." value="${config['Watchlists']['traktrss']}" data-toggle="tooltip" title="${_('Separate lists with commas')}">
+                </div>
+
+                <div class="col-md-12"></div>
 
                 <div class="col-md-3">
                     <label>${_('Trakt Lists')}</label>

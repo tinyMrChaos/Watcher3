@@ -49,9 +49,9 @@ TMDB_TOKENS = 35        # Int begin amount of tokens for TMDB rate limiting
 TMDB_LAST_FILL = None   # Obj datetime.datetime.now() of last time TMDB tokens have been filled
 
 # Global Media Constants
-SOURCES = ('BluRay-4K', 'BluRay-1080P', 'BluRay-720P',
-           'WebDL-4K', 'WebDL-1080P', 'WebDL-720P',
-           'WebRip-4K', 'WebRip-1080P', 'WebRip-720P',
+SOURCES = ('BluRay-4K', 'BluRay-1080P', 'BluRay-720P', 'BluRay-SD',
+           'WebDL-4K', 'WebDL-1080P', 'WebDL-720P', 'WebDL-SD',
+           'WebRip-4K', 'WebRip-1080P', 'WebRip-720P', 'WebRip-SD',
            'DVD-SD',
            'Screener-1080P', 'Screener-720P',
            'Telesync-SD', 'CAM-SD')
@@ -71,7 +71,7 @@ def restart():
     '''
     cherrypy.engine.stop()
     python = sys.executable
-    args = [SCRIPT_PATH] + sys.argv[1:]
+    args = ['"{}"'.format(SCRIPT_PATH) if PLATFORM == 'windows' else SCRIPT_PATH] + sys.argv[1:]
     p = 'Server stopped -- respawning script as: \n {} {}'.format(python, *args)
     logging.info(p)
     print(p)

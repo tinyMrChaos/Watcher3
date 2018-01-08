@@ -49,7 +49,7 @@ class ImdbRss(object):
                 logging.error('IMDB rss request.', exc_info=True)
                 continue
 
-            last_sync = record.get(list_id, 'Sat, 01 Jan 2000 00:00:00 GMT')
+            last_sync = record.get(list_id) or 'Sat, 01 Jan 2000 00:00:00 GMT'
             last_sync = datetime.strptime(last_sync, self.date_format)
 
             record[list_id] = self.parse_build_date(response)
@@ -73,8 +73,10 @@ class ImdbRss(object):
                 self.sync_new_movies(movies, list_id)
 
         logging.info('Storing last synced date.')
-        core.sql.update('SYSTEM', 'data', json.dumps(record), 'name', 'imdb_sync_record')
-
+        if core.sql.row_exists('SYSTEM', name='imdb_sync_record'):
+            core.sql.update('SYSTEM', 'data', json.dumps(record), 'name', 'imdb_sync_record')
+        else:
+            core.sql.write('SYSTEM', {'data': json.dumps(record), 'name': 'imdb_sync_record'})
         logging.info('IMDB sync complete.')
 
     def parse_xml(self, feed):
